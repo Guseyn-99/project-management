@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Проверяет комплектность отчёта по уроку 02."""
+"""Проверяет комплектность отчёта по урокам 02–06."""
 
 from __future__ import annotations
 
@@ -9,44 +9,164 @@ import re
 import struct
 import sys
 import zlib
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
 
-REPORT_PATH = Path("lesson_02/report.md")
-SCREENSHOTS_DIR = Path("lesson_02/screenshots")
-SCREENSHOT_NAMES = (
-    "01-project.png",
-    "02-task-reservation.png",
-    "03-result.png",
-    "04-review.png",
-    "05-completed.png",
-    "06-task-product-card.png",
-    "07-task-checks.png",
-)
-REPORT_FIELDS = (
-    "Репозиторий",
-    "Проект",
-    "Задача 1",
-    "Задача 2",
-    "Задача 3",
-)
+
+@dataclass(frozen=True)
+class LessonRequirements:
+    """Неизменяемые требования к комплекту сдачи одного урока."""
+
+    report_path: Path
+    screenshots_dir: Path
+    screenshot_names: tuple[str, ...]
+    report_fields: tuple[str, ...]
+
+
 MAX_IMAGE_SIZE = 10 * 1024 * 1024
 MIN_WIDTH = 640
-MIN_HEIGHT = 360
+MIN_HEIGHT = 200
 MAX_DIMENSION = 12_000
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-PLACEHOLDER_PARTS = {
-    "owner",
-    "repo",
-    "repository",
-    "your-name",
-    "your-repository",
-    "example",
-    "placeholder",
-    "todo",
-    "url",
-}
-PLACEHOLDER_HOSTS = {"example.com", "example.org", "example.net", "localhost"}
+PLACEHOLDER_PARTS = frozenset(
+    {
+        "owner",
+        "repo",
+        "repository",
+        "your-name",
+        "your-repository",
+        "example",
+        "placeholder",
+        "todo",
+        "url",
+    }
+)
+PLACEHOLDER_HOSTS = frozenset({"example.com", "example.org", "example.net", "localhost"})
+
+
+def lesson_requirements(lesson: str) -> LessonRequirements:
+    """Возвращает требования выбранного урока."""
+    if lesson == "02":
+        return LessonRequirements(
+            report_path=Path("lesson_02/report.md"),
+            screenshots_dir=Path("lesson_02/screenshots"),
+            screenshot_names=(
+                "01-project.png",
+                "02-task-reservation.png",
+                "03-result.png",
+                "04-review.png",
+                "05-completed.png",
+                "06-task-product-card.png",
+                "07-task-checks.png",
+            ),
+            report_fields=("Репозиторий", "Проект", "Задача 1", "Задача 2", "Задача 3"),
+        )
+    if lesson == "03":
+        return LessonRequirements(
+            report_path=Path("lesson_03/report.md"),
+            screenshots_dir=Path("lesson_03/screenshots"),
+            screenshot_names=(
+                "01-questions.png",
+                "02-answers.png",
+                "03-requirements-v1.png",
+                "04-checks-v1.png",
+                "05-change.png",
+                "06-requirements-v2.png",
+                "07-checks-v2.png",
+                "08-summary.png",
+            ),
+            report_fields=("Репозиторий", "Проект", "Задача"),
+        )
+    if lesson == "04":
+        return LessonRequirements(
+            report_path=Path("lesson_04/report.md"),
+            screenshots_dir=Path("lesson_04/screenshots"),
+            screenshot_names=(
+                "01-parent.png",
+                "02-create-reservation.png",
+                "03-reservation-state.png",
+                "04-customer-message.png",
+                "05-test-data.png",
+                "06-integration-check.png",
+                "07-work-order.png",
+                "08-project-plan.png",
+            ),
+            report_fields=(
+                "Репозиторий",
+                "Проект",
+                "Источник требований",
+                "Общая задача",
+                "А1",
+                "А2",
+                "Б",
+                "В",
+                "Г",
+            ),
+        )
+    if lesson == "05":
+        return LessonRequirements(
+            report_path=Path("lesson_05/report.md"),
+            screenshots_dir=Path("lesson_05/screenshots"),
+            screenshot_names=(
+                "01-crm-client.png",
+                "02-crm-request.png",
+                "03-request-clarification.png",
+                "04-launch-task.png",
+                "05-launch-roles-message.png",
+                "06-project-kanban.png",
+                "07-calendar-gantt.png",
+                "08-launch-brief.png",
+                "09-crm-channel.png",
+                "10-automation-process-bi.png",
+            ),
+            report_fields=(
+                "Репозиторий",
+                "Проект",
+                "CRM-клиент",
+                "CRM-запрос",
+                "Источник требований",
+                "Общая задача",
+                "Задача запуска",
+                "Бриф запуска",
+            ),
+        )
+    if lesson == "06":
+        return LessonRequirements(
+            report_path=Path("lesson_06/report.md"),
+            screenshots_dir=Path("lesson_06/screenshots"),
+            screenshot_names=(
+                "01-task-v.png",
+                "02-roles.png",
+                "03-kanban-v.png",
+                "04-calendar.png",
+                "05-gantt-plan.png",
+                "06-brief.png",
+                "07-brief-link-task-v.png",
+                "08-question-decision.png",
+                "09-traceability.png",
+            ),
+            report_fields=(
+                "Репозиторий",
+                "Проект",
+                "Источник требований",
+                "Задача В",
+                "Задача Г",
+                "Бриф",
+                "Канбан",
+                "Календарь",
+                "Гант или план",
+                "Обсуждение задачи В",
+            ),
+        )
+    raise ValueError(f"Неизвестный урок: {lesson}")
+
+
+LESSON_02_REQUIREMENTS = lesson_requirements("02")
+REPORT_PATH = LESSON_02_REQUIREMENTS.report_path
+SCREENSHOTS_DIR = LESSON_02_REQUIREMENTS.screenshots_dir
+SCREENSHOT_NAMES = LESSON_02_REQUIREMENTS.screenshot_names
+REPORT_FIELDS = LESSON_02_REQUIREMENTS.report_fields
 
 
 def parse_url(url: str):
@@ -71,35 +191,36 @@ def is_https_url(url: str) -> bool:
     return parsed is not None and parsed.scheme == "https" and bool(parsed.netloc)
 
 
-def read_report(report: Path, errors: list[str]) -> str | None:
+def read_report(report: Path, requirements: LessonRequirements, errors: list[str]) -> str | None:
     if not report.exists():
-        errors.append(f"Не найден отчёт: {REPORT_PATH}")
+        errors.append(f"Не найден отчёт: {requirements.report_path}")
         return None
     if report.is_symlink():
-        errors.append(f"Отчёт не должен быть символической ссылкой: {REPORT_PATH}")
+        errors.append(f"Отчёт не должен быть символической ссылкой: {requirements.report_path}")
         return None
     if not report.is_file():
-        errors.append(f"Отчёт должен быть обычным файлом: {REPORT_PATH}")
+        errors.append(f"Отчёт должен быть обычным файлом: {requirements.report_path}")
         return None
     try:
         return report.read_text(encoding="utf-8")
     except UnicodeDecodeError:
-        errors.append(f"Отчёт должен быть текстовым UTF-8 файлом: {REPORT_PATH}")
+        errors.append(f"Отчёт должен быть текстовым UTF-8 файлом: {requirements.report_path}")
         return None
 
 
-def validate_report(text: str, errors: list[str]) -> None:
+def validate_report(text: str, requirements: LessonRequirements, errors: list[str]) -> None:
     if "[[" in text or "]]" in text:
         errors.append("В отчёте остались маркеры вида [[...]].")
 
-    values: dict[str, list[str]] = {field: [] for field in REPORT_FIELDS}
-    field_pattern = re.compile(r"^\s*(Репозиторий|Проект|Задача [123]):\s*(\S+)\s*$")
+    values: dict[str, list[str]] = {field: [] for field in requirements.report_fields}
+    fields = "|".join(re.escape(field) for field in requirements.report_fields)
+    field_pattern = re.compile(rf"^\s*({fields}):\s*(\S+)\s*$")
     for line in text.splitlines():
         match = field_pattern.match(line)
         if match:
             values[match.group(1)].append(match.group(2))
 
-    for field in REPORT_FIELDS:
+    for field in requirements.report_fields:
         field_values = values[field]
         if not field_values:
             errors.append(f"Не заполнено поле «{field}: URL».")
@@ -126,25 +247,19 @@ def validate_report(text: str, errors: list[str]) -> None:
         or parsed.fragment
         or len(path_parts) != 2
     ):
-        errors.append(
-            "Поле «Репозиторий» должно иметь вид https://github.com/OWNER/REPO."
-        )
+        errors.append("Поле «Репозиторий» должно иметь вид https://github.com/OWNER/REPO.")
         return
 
     github_repository = os.environ.get("GITHUB_REPOSITORY")
     if github_repository and "/" in github_repository:
         actual_repository = "/".join(path_parts)
         if actual_repository != github_repository:
-            errors.append(
-                "Репозиторий в отчёте не совпадает с переменной GITHUB_REPOSITORY."
-            )
+            errors.append("Репозиторий в отчёте не совпадает с переменной GITHUB_REPOSITORY.")
 
 
 def has_screenshot_link(text: str, filename: str) -> bool:
     escaped = re.escape(f"screenshots/{filename}")
-    pattern = re.compile(
-        rf"\[[^\]\n]+\]\(\s*<?{escaped}>?(?:\s+['\"][^'\"]*['\"])?\s*\)"
-    )
+    pattern = re.compile(rf"\[[^\]\n]+\]\(\s*<?{escaped}>?(?:\s+['\"][^'\"]*['\"])?\s*\)")
     return bool(pattern.search(text))
 
 
@@ -174,9 +289,7 @@ def validate_png(root: Path, image: Path, errors: list[str]) -> None:
         return
 
     width, height = struct.unpack(">II", data[16:24])
-    if not (
-        MIN_WIDTH <= width <= MAX_DIMENSION and MIN_HEIGHT <= height <= MAX_DIMENSION
-    ):
+    if not (MIN_WIDTH <= width <= MAX_DIMENSION and MIN_HEIGHT <= height <= MAX_DIMENSION):
         errors.append(
             f"Недопустимый размер {width}×{height} у скриншота {relative_path}; "
             f"нужен диапазон {MIN_WIDTH}×{MIN_HEIGHT}—{MAX_DIMENSION}×{MAX_DIMENSION}."
@@ -217,19 +330,22 @@ def is_valid_png(data: bytes) -> bool:
     return False
 
 
-def validate_screenshots(root: Path, text: str | None, errors: list[str]) -> None:
-    screenshots = root / SCREENSHOTS_DIR
+def validate_screenshots(
+    root: Path, text: str | None, requirements: LessonRequirements, errors: list[str]
+) -> None:
+    screenshots = root / requirements.screenshots_dir
     if screenshots.is_symlink():
         errors.append(
-            f"Каталог скриншотов не должен быть символической ссылкой: {SCREENSHOTS_DIR}"
+            "Каталог скриншотов не должен быть символической ссылкой: "
+            f"{requirements.screenshots_dir}"
         )
         return
     if not screenshots.exists() or not screenshots.is_dir():
-        errors.append(f"Не найден каталог скриншотов: {SCREENSHOTS_DIR}")
+        errors.append(f"Не найден каталог скриншотов: {requirements.screenshots_dir}")
         return
 
-    for filename in SCREENSHOT_NAMES:
-        relative_path = SCREENSHOTS_DIR / filename
+    for filename in requirements.screenshot_names:
+        relative_path = requirements.screenshots_dir / filename
         image = root / relative_path
         if text is not None and not has_screenshot_link(text, filename):
             errors.append(f"В отчёте нет Markdown-ссылки на {relative_path}.")
@@ -245,19 +361,20 @@ def validate_screenshots(root: Path, text: str | None, errors: list[str]) -> Non
         validate_png(root, image, errors)
 
 
-def validate(root: Path) -> list[str]:
-    """Возвращает полный список ошибок комплектности работы."""
+def validate(root: Path, lesson: str = "02") -> list[str]:
+    """Возвращает полный список ошибок комплектности работы выбранного урока."""
+    requirements = lesson_requirements(lesson)
     errors: list[str] = []
-    report = root / REPORT_PATH
-    text = read_report(report, errors)
+    report = root / requirements.report_path
+    text = read_report(report, requirements, errors)
     if text is not None:
-        validate_report(text, errors)
-    validate_screenshots(root, text, errors)
+        validate_report(text, requirements, errors)
+    validate_screenshots(root, text, requirements, errors)
     return errors
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Проверка комплекта отчёта lesson_02")
+    parser = argparse.ArgumentParser(description="Проверка комплекта отчёта урока")
     parser.add_argument(
         "root",
         nargs="?",
@@ -265,8 +382,14 @@ def main() -> int:
         default=Path(__file__).resolve().parents[1],
         help="корень репозитория (по умолчанию — корень этого шаблона)",
     )
+    parser.add_argument(
+        "--lesson",
+        choices=("02", "03", "04", "05", "06"),
+        default="02",
+        help="номер проверяемого урока (по умолчанию: 02)",
+    )
     args = parser.parse_args()
-    errors = validate(args.root.resolve())
+    errors = validate(args.root.resolve(), args.lesson)
     if errors:
         print("Проверка не пройдена:")
         for error in errors:
